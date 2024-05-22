@@ -1,0 +1,12 @@
+{
+    "extra": {
+        "keywords": [
+            "Haiku",
+            "Haiku OS"
+        ]
+    },
+    "name": "HaikuBook",
+    "revision": 0,
+    "title": "Haiku API Reference",
+    "version": "0.0.0"
+}
