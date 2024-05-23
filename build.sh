@@ -40,7 +40,7 @@ while read -r -a line; do
 	name="${line[1]}"
 	class=$(echo "${line[3]}" | sed -E -e 's,class(\w+)\.html.+,\1,' -e 's,_1,:,g')
 	sqlCommands+=("UPDATE searchIndex SET name=\"${class}::${name}\" WHERE id=${line[0]}")
-done <<< $(sqlite3 $DB_PATH 'SELECT * FROM searchIndex WHERE Type="Method"')
+done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE Type='Method'")
 
 for ((i=0; i<${#sqlCommands[@]}; i++));do
 	sqlite3 $DB_PATH "${sqlCommands[$i]}"
