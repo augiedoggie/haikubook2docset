@@ -31,17 +31,23 @@ cp -afv meta.json icon*.png org.haiku.HaikuBook.docset
 
 ## Modify sqlite index with namespace/class prefix for methods
 
+echo
+echo "Rewriting docset index. On Linux this only takes a minute"
+echo "When running this script on Haiku it may take several minutes..."
+
 DB_PATH=org.haiku.HaikuBook.docset/Contents/Resources/docSet.dsidx
 
-sqlCommands=()
+echo "BEGIN TRANSACTION;" > modifyindex.sql
 
+IFS='|'
 while read -r -a line; do
-	IFS='|'
 	name="${line[1]}"
 	class=$(echo "${line[3]}" | sed -E -e 's,class(\w+)\.html.+,\1,' -e 's,_1,:,g')
-	sqlCommands+=("UPDATE searchIndex SET name=\"${class}::${name}\" WHERE id=${line[0]}")
+	echo "UPDATE searchIndex SET name='${class}::${name}' WHERE id=${line[0]};" >> modifyindex.sql
 done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE Type='Method'")
 
-for ((i=0; i<${#sqlCommands[@]}; i++));do
-	sqlite3 $DB_PATH "${sqlCommands[$i]}"
-done
+echo "COMMIT;" >> modifyindex.sql
+
+sqlite3 $DB_PATH < modifyindex.sql
+
+rm -f modifyindex.sql
