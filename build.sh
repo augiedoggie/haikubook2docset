@@ -59,16 +59,19 @@ echo "UPDATE searchIndex SET type = 'Guide' WHERE type = 'Data' AND name like '%
 ## and convert double underscore to single, like ${foo//__/_}
 classRegex="class(\w+)\.html"
 structRegex="struct(\w+)\.html"
+namespaceRegex="namespace(\w+).html"
 
 IFS='|'
 
-## prefix methods, variables, and templates with class and namespace
+## prefix methods, variables, and templates with class or struct and namespace
 while read -r -a line; do
-	if [[ "${line[3]}" =~ $classRegex ]];then
+	if [[ "${line[3]}" =~ $namespaceRegex || "${line[3]}" =~ $classRegex || "${line[3]}" =~ $structRegex ]];then
 		newName="${BASH_REMATCH[1]//_1/:}"
 		echo "UPDATE searchIndex SET name = '${newName//__/_}::${line[1]}' WHERE id = ${line[0]};" >> modifyindex.sql
 	fi
-done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE type = 'Method' OR type = 'Type' OR type = 'Variable' AND path like 'class%'")
+done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE \
+	(type = 'Method' OR type = 'Type' OR type = 'Variable' OR type = 'Function') \
+	AND (path like 'namespace%' OR path like 'class%' OR path like 'struct%');")
 
 ## prefix namespaced classes
 while read -r -a line; do
@@ -78,7 +81,7 @@ while read -r -a line; do
 	fi
 done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE type = 'Class' AND path like 'class%\_1\_1%' ESCAPE '\';")
 
-## prefix namespaced structs and reset type to 'Struct'
+## prefix 'Class' structs and reset type to 'Struct'
 while read -r -a line; do
 	if [[ "${line[3]}" =~ $structRegex ]];then
 		newName="${BASH_REMATCH[1]//_1/:}"
@@ -86,13 +89,15 @@ while read -r -a line; do
 	fi
 done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE type = 'Class' AND path like 'struct%';")
 
-## prefix struct variables and functions
+## prefix namespaced enums and reset type if needed
 while read -r -a line; do
-	if [[ "${line[3]}" =~ $structRegex ]];then
+	if [[ "${line[3]}" =~ $namespaceRegex || "${line[3]}" =~ $classRegex ]];then
 		newName="${BASH_REMATCH[1]//_1/:}"
-		echo "UPDATE searchIndex SET name = '${newName//__/_}::${line[1]}' WHERE id = ${line[0]};" >> modifyindex.sql
+		echo "UPDATE searchIndex SET type = 'Enum', name = '${newName//__/_}::${line[1]}' WHERE id = ${line[0]};" >> modifyindex.sql
 	fi
-done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE type = 'Variable' OR type = 'Function' AND path like 'struct%';")
+done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE \
+	(type = 'Data' OR type = 'Enum') \
+	AND (path like 'namespace%' OR path like 'class%');")
 
 echo "COMMIT;" >> modifyindex.sql
 
