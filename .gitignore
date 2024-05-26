@@ -2,3 +2,5 @@ haiku
 org.haiku.HaikuBook.docset
 modifyindex.sql
 *.sqbpro
+doxygen.log
+d2d.log
