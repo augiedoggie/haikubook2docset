@@ -49,19 +49,37 @@ echo
 echo "Rewriting docset index..."
 
 DB_PATH=org.haiku.HaikuBook.docset/Contents/Resources/docSet.dsidx
+## Database columns in each line: id|name|type|path
 
 echo "BEGIN TRANSACTION;" > modifyindex.sql
 
+## Miscellaneous sorting and cleanup
+echo "UPDATE searchIndex SET type = 'Category' WHERE type = 'Data' and path like 'group_%.html#';" >> modifyindex.sql
+echo "UPDATE searchIndex SET type = 'Guide' WHERE type = 'Data' AND name like '%_intro';" >> modifyindex.sql
+
+
+## prefix methods with class and namespace
 IFS='|'
 while read -r -a line; do
-	# Database columns in each line: id|name|type|path
-	# extract class name from html file
+	# extract fully qualified class name from html file
 	classre="class(\w+)\.html"
 	if [[ "${line[3]}" =~ $classre ]];then
-		# also substitute _1_1 in namespaces
+		## also substitute _1_1 in namespaces
 		echo "UPDATE searchIndex SET name='${BASH_REMATCH[1]//_1/:}::${line[1]}' WHERE id=${line[0]};" >> modifyindex.sql
 	fi
-done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE type='Method'")
+done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE type='Method' OR type = 'Type' AND path like 'class%'")
+
+
+## prefix namespaced classes
+while read -r -a line; do
+	## extract fully qualified class name from html file
+	classre="class(\w+)\.html"
+	if [[ "${line[3]}" =~ $classre ]];then
+		## also substitute _1_1 in namespaces
+		echo "UPDATE searchIndex SET name='${BASH_REMATCH[1]//_1/:}' WHERE id=${line[0]};" >> modifyindex.sql
+	fi
+done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE type = 'Class' AND path like 'class%_1_1%';")
+
 
 echo "COMMIT;" >> modifyindex.sql
 
