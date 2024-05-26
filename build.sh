@@ -53,6 +53,7 @@ echo "BEGIN TRANSACTION;" > modifyindex.sql
 ## Miscellaneous sorting and cleanup
 echo "UPDATE searchIndex SET type = 'Category' WHERE type = 'Data' and path like 'group\_%.html#' ESCAPE '\';" >> modifyindex.sql
 echo "UPDATE searchIndex SET type = 'Guide' WHERE type = 'Data' AND name like '%\_intro' ESCAPE '\';" >> modifyindex.sql
+echo "UPDATE searchIndex SET type = 'Enum' WHERE type = 'Data' AND path like '%\_8h%' ESCAPE '\';" >> modifyindex.sql
 
 ## regexes to extract fully qualifiied name
 ## will also need pattern substitution to replace '_1' with ':', like ${BASH_REMATCH[1]//_1/:}
