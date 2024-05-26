@@ -54,8 +54,8 @@ DB_PATH=org.haiku.HaikuBook.docset/Contents/Resources/docSet.dsidx
 echo "BEGIN TRANSACTION;" > modifyindex.sql
 
 ## Miscellaneous sorting and cleanup
-echo "UPDATE searchIndex SET type = 'Category' WHERE type = 'Data' and path like 'group_%.html#';" >> modifyindex.sql
-echo "UPDATE searchIndex SET type = 'Guide' WHERE type = 'Data' AND name like '%_intro';" >> modifyindex.sql
+echo "UPDATE searchIndex SET type = 'Category' WHERE type = 'Data' and path like 'group\_%.html#' ESCAPE '\';" >> modifyindex.sql
+echo "UPDATE searchIndex SET type = 'Guide' WHERE type = 'Data' AND name like '%\_intro' ESCAPE '\';" >> modifyindex.sql
 
 IFS='|'
 classRegex="class(\w+)\.html"
@@ -76,7 +76,7 @@ while read -r -a line; do
 		## also substitute _1_1 in namespaces
 		echo "UPDATE searchIndex SET name='${BASH_REMATCH[1]//_1/:}' WHERE id=${line[0]};" >> modifyindex.sql
 	fi
-done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE type = 'Class' AND path like 'class%_1_1%';")
+done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE type = 'Class' AND path like 'class%\_1\_1%' ESCAPE '\';")
 
 echo "COMMIT;" >> modifyindex.sql
 
