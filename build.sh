@@ -6,8 +6,6 @@ if ! test -d haiku;then
 	git clone --depth=1 --filter=blob:none --sparse https://github.com/haiku/haiku.git
 fi
 
-#cd haiku
-
 (cd haiku && git sparse-checkout set --cone \
 	docs/user \
 	headers/os \
@@ -28,7 +26,7 @@ sed -i haiku/docs/user/Doxyfile \
 
 echo
 echo "Running doxygen..."
-(cd haiku/docs/user && doxygen > doxygen.log 2>&1)
+(cd haiku/docs/user && doxygen) > doxygen.log 2>&1
 
 rm -rf org.haiku.HaikuBook.docset
 
