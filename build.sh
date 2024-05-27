@@ -26,13 +26,13 @@ sed -i haiku/docs/user/Doxyfile \
 
 echo
 echo "Running doxygen..."
-(cd haiku/docs/user && doxygen) > doxygen.log 2>&1
 
-rm -rf org.haiku.HaikuBook.docset
+(cd haiku/docs/user && doxygen) > doxygen.log 2>&1
 
 echo
 echo "Running doxygen2docset..."
 
+rm -rf org.haiku.HaikuBook.docset
 doxygen2docset --doxygen haiku/generated/doxygen/html --docset . > d2d.log
 
 echo
@@ -40,18 +40,18 @@ echo "Copying docset metadata..."
 
 cp -af meta.json icon*.png org.haiku.HaikuBook.docset
 
-echo
-echo "Rewriting docset index..."
-
 DB_PATH=org.haiku.HaikuBook.docset/Contents/Resources/docSet.dsidx
 ## Database columns in each line: id|name|type|path
 
-echo "BEGIN TRANSACTION;" > modifyindex.sql
+echo
+echo "Applying manual docset index changes..."
 
-## Miscellaneous sorting and cleanup
-echo "UPDATE searchIndex SET type = 'Category' WHERE type = 'Data' and path like 'group\_%.html#' ESCAPE '\';" >> modifyindex.sql
-echo "UPDATE searchIndex SET type = 'Guide' WHERE type = 'Data' AND name like '%\_intro' ESCAPE '\';" >> modifyindex.sql
-echo "UPDATE searchIndex SET type = 'Enum' WHERE type = 'Data' AND path like '%\_8h%' ESCAPE '\';" >> modifyindex.sql
+sqlite3 $DB_PATH < static.sql
+
+echo
+echo "Applying automated docset index changes..."
+
+echo "BEGIN TRANSACTION;" > modifyindex.sql
 
 ## regexes to extract fully qualifiied name
 ## will also need pattern substitution to replace '_1' with ':', like ${BASH_REMATCH[1]//_1/:}
