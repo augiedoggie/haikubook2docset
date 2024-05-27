@@ -72,13 +72,15 @@ done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE \
 	(type = 'Method' OR type = 'Type' OR type = 'Variable' OR type = 'Function') \
 	AND (path like 'namespace%' OR path like 'class%' OR path like 'struct%');")
 
-## prefix namespaced classes
+## prefix namespaced classes and namespaces
 while read -r -a line; do
-	if [[ "${line[3]}" =~ $classRegex ]];then
+	if [[ "${line[3]}" =~ $classRegex || "${line[3]}" =~ $namespaceRegex ]];then
 		newName="${BASH_REMATCH[1]//_1/:}"
 		echo "UPDATE searchIndex SET name = '${newName//__/_}' WHERE id = ${line[0]};" >> modifyindex.sql
 	fi
-done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE type = 'Class' AND path like 'class%\_1\_1%' ESCAPE '\';")
+done <<< $(sqlite3 $DB_PATH "SELECT * FROM searchIndex WHERE \
+	(type = 'Class' AND path like 'class%\_1\_1%' ESCAPE '\') \
+	OR type = 'Namespace';")
 
 ## prefix 'Class' structs and reset type to 'Struct'
 while read -r -a line; do
