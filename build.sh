@@ -1,9 +1,25 @@
 #!/bin/env bash
 
+## the github repo doesn't contain hrev tags for the version in the feed xml file
+## we can still use github for building and get tags from the official repo
+OFFICIAL_REPO="https://review.haiku-os.org/haiku"
+GITHUB_REPO="https://github.com/haiku/haiku.git"
+
 set -e
 
+topLevel="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
+
+if test -n "$1";then
+	buildDir="$1"
+else
+	buildDir="$topLevel/generated"
+fi
+echo "Using build dir: $buildDir"
+echo
+mkdir -p "$buildDir" && cd "$buildDir"
+
 if ! test -d haiku;then
-	git clone --depth=1 --filter=blob:none --sparse https://github.com/haiku/haiku.git
+	git clone --depth=1 --filter=blob:none --sparse "$GITHUB_REPO"
 fi
 
 (cd haiku && git sparse-checkout set --cone \
@@ -24,31 +40,26 @@ sed -i haiku/docs/user/Doxyfile \
 	-e 's,HIDE_UNDOC_CLASSES     = YES,HIDE_UNDOC_CLASSES     = NO,' \
 	-e 's,ENABLED_SECTIONS       =,ENABLED_SECTIONS       = INTERNAL,'
 
-echo
 echo "Running doxygen..."
 
 (cd haiku/docs/user && doxygen) > doxygen.log 2>&1
 
-echo
 echo "Running doxygen2docset..."
 
 rm -rf org.haiku.HaikuBook.docset
 doxygen2docset --doxygen haiku/generated/doxygen/html --docset . > d2d.log
 
-echo
 echo "Copying docset metadata..."
 
-cp -af meta.json icon*.png org.haiku.HaikuBook.docset
+cp -af "$topLevel/meta.json" "$topLevel/icon.png" "$topLevel/icon@2x.png" org.haiku.HaikuBook.docset
 
 DB_PATH=org.haiku.HaikuBook.docset/Contents/Resources/docSet.dsidx
 ## Database columns in each line: id|name|type|path
 
-echo
 echo "Applying manual docset index changes..."
 
-sqlite3 $DB_PATH < static.sql
+sqlite3 $DB_PATH < "$topLevel/static.sql"
 
-echo
 echo "Applying automated docset index changes..."
 
 echo "BEGIN TRANSACTION;" > modifyindex.sql
@@ -104,4 +115,14 @@ echo "COMMIT;" >> modifyindex.sql
 
 sqlite3 $DB_PATH < modifyindex.sql
 
-rm -f modifyindex.sql doxygen.log d2d.log
+if test -n "$GENERATE_FEED";then
+	echo "Generating feed xml and tarball..."
+
+	tar --exclude='.DS_Store' -czf org.haiku.HaikuBook.docset.tgz org.haiku.HaikuBook.docset
+
+	echo "Searching for hrev tag..."
+   	docsetVersion="$(cd haiku && git ls-remote --tags $OFFICIAL_REPO 'refs/tags/hrev*' | grep -Po "$(git rev-parse HEAD)\s+refs/tags/\K(hrev\d+)")-$(date -u '+%s')"
+	sed "$topLevel/feed.xml" -e "s,@DOCSET_VERSION@,$docsetVersion," > HaikuBook.xml
+fi
+
+echo "Build finished successfully."

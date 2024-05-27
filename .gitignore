@@ -1,6 +1,8 @@
-haiku
+generated
 org.haiku.HaikuBook.docset
+org.haiku.HaikuBook.docset.tgz
+HaikuBook.xml
 modifyindex.sql
-*.sqbpro
 doxygen.log
 d2d.log
+*.sqbpro
