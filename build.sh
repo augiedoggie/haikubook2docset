@@ -119,7 +119,7 @@ sqlite3 $DB_PATH < modifyindex.sql
 if test -n "$GENERATE_FEED";then
 	echo "Generating feed xml and tarball..."
 
-	tar --exclude='.DS_Store' -czf org.haiku.HaikuBook.docset.tgz org.haiku.HaikuBook.docset
+	tar --exclude='.DS_Store' -czf HaikuBook.docset.tgz HaikuBook.docset
 
 	echo "Searching for hrev tag..."
 	docsetVersion="$(cd haiku && git ls-remote --tags $OFFICIAL_REPO 'refs/tags/hrev*' | grep -Po "$(git rev-parse HEAD)\s+refs/tags/\K(hrev\d+)")-$(date -u '+%s')"
