@@ -1,0 +1,55 @@
+
+name: Build Release
+
+on:
+#  push:
+#    branches: [ "main" ]
+#  pull_request:
+#    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-haiku:
+    timeout-minutes: 60
+    runs-on: ${{ matrix.config.runner }}
+    name: build-${{ matrix.config.os }}-${{ matrix.config.version }}-${{ matrix.config.architecture }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { os: haiku, version: 'r1beta4', runner: 'ubuntu-latest', architecture: 'x86-64' }
+          #- { os: haiku, version: 'r1beta4',  runner: 'ubuntu-latest', architecture: 'x86' }
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: haiku/haiku
+          #sparse-checkout-cone-mode: true
+          sparse-checkout: |
+            docs/user
+            headers/os
+            headers/posix
+            headers/private
+            src/kits/game
+          path: generated/haiku
+      - uses: korli/action@v0.23.0-haiku
+        with:
+          operating_system: ${{ matrix.config.os }}
+          version: ${{ matrix.config.version }}
+          architecture: ${{ matrix.config.architecture }}
+          run: |
+            ssh user@localhost "pkgman install -y cmd:doxygen cmd:doxygen2docset cmd:git cmd:sqlite3 && pkgman update -y cmd:grep lib:libstdc++" &&
+            GENERATE_FEED=1 ./build.sh
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Haiku R1
+          #name: ${{ github.event.repository.updated_at }}
+          body: HaikuBook API docset for Haiku R1
+          #token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
+          tag_name: Haiku
+          files: |
+            generated/HaikuBook.docset.tgz
+            generated/HaikuBook.xml
