@@ -20,14 +20,14 @@ mkdir -p "$buildDir" && cd "$buildDir"
 
 if ! test -d haiku;then
 	git clone --depth=1 --filter=blob:none --sparse "$GITHUB_REPO"
-fi
 
-(cd haiku && git sparse-checkout set --cone \
-	docs/user \
-	headers/os \
-	headers/posix \
-	headers/private \
-	src/kits/game)
+	(cd haiku && git sparse-checkout set --cone \
+		docs/user \
+		headers/os \
+		headers/posix \
+		headers/private \
+		src/kits/game)
+fi
 
 rm -rf haiku/generated
 
