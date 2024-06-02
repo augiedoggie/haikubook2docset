@@ -46,14 +46,15 @@ echo "Running doxygen..."
 
 echo "Running doxygen2docset..."
 
-rm -rf org.haiku.HaikuBook.docset
+rm -rf HaikuBook.docset
 doxygen2docset --doxygen haiku/generated/doxygen/html --docset . > d2d.log
+mv -f org.haiku.HaikuBook.docset HaikuBook.docset
 
 echo "Copying docset metadata..."
 
-cp -af "$topLevel/meta.json" "$topLevel/icon.png" "$topLevel/icon@2x.png" org.haiku.HaikuBook.docset
+cp -af "$topLevel/meta.json" "$topLevel/icon.png" "$topLevel/icon@2x.png" HaikuBook.docset
 
-DB_PATH=org.haiku.HaikuBook.docset/Contents/Resources/docSet.dsidx
+DB_PATH=HaikuBook.docset/Contents/Resources/docSet.dsidx
 ## Database columns in each line: id|name|type|path
 
 echo "Applying manual docset index changes..."
@@ -121,7 +122,7 @@ if test -n "$GENERATE_FEED";then
 	tar --exclude='.DS_Store' -czf org.haiku.HaikuBook.docset.tgz org.haiku.HaikuBook.docset
 
 	echo "Searching for hrev tag..."
-   	docsetVersion="$(cd haiku && git ls-remote --tags $OFFICIAL_REPO 'refs/tags/hrev*' | grep -Po "$(git rev-parse HEAD)\s+refs/tags/\K(hrev\d+)")-$(date -u '+%s')"
+	docsetVersion="$(cd haiku && git ls-remote --tags $OFFICIAL_REPO 'refs/tags/hrev*' | grep -Po "$(git rev-parse HEAD)\s+refs/tags/\K(hrev\d+)")-$(date -u '+%s')"
 	sed "$topLevel/feed.xml" -e "s,@DOCSET_VERSION@,$docsetVersion," > HaikuBook.xml
 fi
 
