@@ -1,11 +1,7 @@
 
-name: Build Release
+name: Update Docset Feed
 
 on:
-#  push:
-#    branches: [ "main" ]
-#  pull_request:
-#    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -19,14 +15,14 @@ jobs:
       matrix:
         config:
           - { os: haiku, version: 'r1beta4', runner: 'ubuntu-latest', architecture: 'x86-64' }
-          #- { os: haiku, version: 'r1beta4',  runner: 'ubuntu-latest', architecture: 'x86' }
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - name: Checkout haikubook2docset source
+        uses: actions/checkout@v4
+      - name: Checkout Haiku source
+        uses: actions/checkout@v4
         with:
           repository: haiku/haiku
-          #sparse-checkout-cone-mode: true
           sparse-checkout: |
             docs/user
             headers/os
@@ -34,7 +30,8 @@ jobs:
             headers/private
             src/kits/game
           path: generated/haiku
-      - uses: korli/action@v0.23.0-haiku
+      - name: Build docset
+        uses: korli/action@v0.23.0-haiku
         with:
           operating_system: ${{ matrix.config.os }}
           version: ${{ matrix.config.version }}
@@ -42,13 +39,11 @@ jobs:
           run: |
             ssh user@localhost "pkgman install -y cmd:doxygen cmd:doxygen2docset cmd:git cmd:sqlite3 && pkgman update -y cmd:grep lib:libstdc++" &&
             GENERATE_FEED=1 ./build.sh
-      - name: Create release
+      - name: Update github release
         uses: softprops/action-gh-release@v2
         with:
           name: Haiku R1
-          #name: ${{ github.event.repository.updated_at }}
           body: HaikuBook API docset for Haiku R1
-          #token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
           tag_name: Haiku
           files: |
             generated/HaikuBook.docset.tgz
