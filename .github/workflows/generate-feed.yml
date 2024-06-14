@@ -47,7 +47,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Haiku R1
-          body: HaikuBook API docset for Haiku R1
+          body: |
+            HaikuBook API docset for Haiku R1
+            Use the download link for the HaikuBook.xml file as the feed URL inside of the Zeal app.
           tag_name: Haiku
           files: |
             generated/HaikuBook.docset.tgz
