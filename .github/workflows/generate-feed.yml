@@ -1,6 +1,10 @@
 
 name: Update Docset Feed
 
+# we need write permission to create a release
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
 
