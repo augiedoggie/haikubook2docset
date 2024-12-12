@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { os: haiku, version: 'r1beta4', runner: 'ubuntu-latest', architecture: 'x86-64' }
+          - { os: haiku, version: 'r1beta5', runner: 'ubuntu-latest', architecture: 'x86-64' }
 
     steps:
       - name: Checkout haikubook2docset source
@@ -35,7 +35,7 @@ jobs:
             src/kits/game
           path: generated/haiku
       - name: Build docset
-        uses: korli/action@v0.23.0-haiku
+        uses: korli/action@v0.25.0-haiku1
         with:
           operating_system: ${{ matrix.config.os }}
           version: ${{ matrix.config.version }}
